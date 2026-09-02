@@ -201,11 +201,13 @@
       emptyTip.classList.toggle('hidden', shares.length > 0);
       tbody.innerHTML = shares.map(function (s) {
         var safeId = esc(s.id);
-        var url = location.origin + '/s/' + s.id;
+        var sharePath = '/s/' + s.id + (s.type === 'site' ? '/' : '');
+        var safeSharePath = '/s/' + safeId + (s.type === 'site' ? '/' : '');
+        var url = location.origin + sharePath;
         return '<tr>'
           + '<td><span class="pill pill-' + s.type + '">' + (TYPE_LABEL[s.type] || s.type) + '</span>' + (s.password_protected ? '<span class="protection-tag">LOCK</span>' : '') + '</td>'
           + '<td>' + esc(s.title) + '</td>'
-          + '<td><a href="/s/' + safeId + '" target="_blank" rel="noopener" class="mono">/s/' + safeId + '</a></td>'
+          + '<td><a href="' + safeSharePath + '" target="_blank" rel="noopener" class="mono">' + safeSharePath + '</a></td>'
           + '<td>' + s.views + '</td>'
           + '<td>' + fmtTime(s.created_at) + '</td>'
           + '<td><div class="ops">'

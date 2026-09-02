@@ -95,11 +95,13 @@ test('text shares support a password and normalized custom suffix', async () => 
     body: { password: 'open-sesame' },
   });
   assert.equal(unlocked.response.status, 200);
+  assert.equal(unlocked.data.url, '/s/my-launch');
   const accessCookie = cookiePair(unlocked.response.headers.get('set-cookie'));
   assert.match(accessCookie, /^hs_share_access=/);
 
   const visible = await fetch(baseUrl + '/s/my-launch', {
     headers: { Cookie: accessCookie },
+    redirect: 'manual',
   });
   assert.equal(visible.status, 200);
   assert.equal(await visible.text(), content);
@@ -129,8 +131,43 @@ test('text shares support a password and normalized custom suffix', async () => 
   });
   assert.equal(legacy.response.status, 200);
   assert.match(legacy.data.id, /^[A-Za-z0-9]{10}$/);
-  const publicPage = await fetch(baseUrl + legacy.data.url);
+  const publicPage = await fetch(baseUrl + legacy.data.url, { redirect: 'manual' });
+  assert.equal(publicPage.status, 200);
   assert.equal(await publicPage.text(), '<p>public-share</p>');
+});
+
+test('Markdown and JSON shares keep non-directory URLs', async () => {
+  const markdown = await jsonRequest('/api/shares', {
+    method: 'POST',
+    cookie: sessionCookie,
+    body: {
+      type: 'markdown',
+      title: 'Markdown page',
+      content: '# markdown-content',
+      custom_slug: 'md-launch',
+    },
+  });
+  assert.equal(markdown.response.status, 200);
+  assert.equal(markdown.data.url, '/s/md-launch');
+  const markdownPage = await fetch(baseUrl + markdown.data.url, { redirect: 'manual' });
+  assert.equal(markdownPage.status, 200);
+  assert.match(await markdownPage.text(), /markdown-content/);
+
+  const json = await jsonRequest('/api/shares', {
+    method: 'POST',
+    cookie: sessionCookie,
+    body: {
+      type: 'json',
+      title: 'JSON page',
+      content: '{"message":"json-content"}',
+      custom_slug: 'json-launch',
+    },
+  });
+  assert.equal(json.response.status, 200);
+  assert.equal(json.data.url, '/s/json-launch');
+  const jsonPage = await fetch(baseUrl + json.data.url, { redirect: 'manual' });
+  assert.equal(jsonPage.status, 200);
+  assert.match(await jsonPage.text(), /json-content/);
 });
 
 test('ZIP sites protect both the index and static assets', async () => {
@@ -152,25 +189,52 @@ test('ZIP sites protect both the index and static assets', async () => {
   const created = await createdResponse.json();
   assert.equal(createdResponse.status, 200);
   assert.equal(created.id, 'private-site');
+  assert.equal(created.url, '/s/private-site/');
+
+  const lockedIndex = await fetch(baseUrl + '/s/private-site/');
+  assert.equal(lockedIndex.status, 200);
+  assert.match(await lockedIndex.text(), /share-password-form/);
+
+  const lockedLegacyIndex = await fetch(baseUrl + '/s/private-site?view=mobile', { redirect: 'manual' });
+  assert.equal(lockedLegacyIndex.status, 200);
+  const lockedLegacyHtml = await lockedLegacyIndex.text();
+  assert.match(lockedLegacyHtml, /share-password-form/);
+  assert.match(lockedLegacyHtml, /data-unlock-url="\/s\/private-site\/unlock\?view=mobile"/);
+  assert.doesNotMatch(lockedLegacyHtml, /assets\/site\.css/);
 
   const lockedAsset = await fetch(baseUrl + '/s/private-site/assets/site.css');
   assert.equal(lockedAsset.status, 401);
+  const lockedShares = await jsonRequest('/api/shares', { cookie: sessionCookie });
+  assert.equal(lockedShares.data.shares.find((share) => share.id === 'private-site').views, 0);
 
-  const unlocked = await jsonRequest('/s/private-site/unlock', {
+  const unlocked = await jsonRequest('/s/private-site/unlock?view=mobile', {
     method: 'POST',
     body: { password: 'site-pass' },
   });
+  assert.equal(unlocked.response.status, 200);
+  assert.equal(unlocked.data.url, '/s/private-site/?view=mobile');
   const accessCookie = cookiePair(unlocked.response.headers.get('set-cookie'));
 
-  const index = await fetch(baseUrl + '/s/private-site', { headers: { Cookie: accessCookie } });
+  const legacyIndex = await fetch(baseUrl + '/s/private-site?view=mobile', {
+    headers: { Cookie: accessCookie },
+    redirect: 'manual',
+  });
+  assert.equal(legacyIndex.status, 308);
+  assert.equal(legacyIndex.headers.get('location'), '/s/private-site/?view=mobile');
+
+  const index = await fetch(baseUrl + '/s/private-site/', { headers: { Cookie: accessCookie } });
   assert.equal(index.status, 200);
   assert.match(await index.text(), /private-site/);
 
-  const asset = await fetch(baseUrl + '/s/private-site/assets/site.css', {
+  const assetUrl = new URL('assets/site.css', baseUrl + '/s/private-site/');
+  assert.equal(assetUrl.pathname, '/s/private-site/assets/site.css');
+  const asset = await fetch(assetUrl, {
     headers: { Cookie: accessCookie },
   });
   assert.equal(asset.status, 200);
   assert.equal(await asset.text(), 'body { color: rgb(1, 2, 3); }');
+  const finalShares = await jsonRequest('/api/shares', { cookie: sessionCookie });
+  assert.equal(finalShares.data.shares.find((share) => share.id === 'private-site').views, 1);
 });
 
 async function jsonRequest(url, options = {}) {

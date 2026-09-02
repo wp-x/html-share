@@ -228,7 +228,7 @@ module.exports = function sharesRouter(db, config) {
           }
           throw dbError;
         }
-        res.json({ id, url: '/s/' + id, password_protected: !!options.passwordHash });
+        res.json({ id, url: '/s/' + id + '/', password_protected: !!options.passwordHash });
       } catch (e2) {
         if (destDir) rmrf(destDir);
         fail(400, 'ZIP 解析失败：' + (e2.message || '文件损坏'));
@@ -257,9 +257,10 @@ module.exports = function sharesRouter(db, config) {
   // ---------- 分享渲染 ----------
 
   router.post('/s/:id/unlock', (req, res) => {
-    const share = db.prepare('SELECT id, password_hash FROM shares WHERE id = ?').get(req.params.id);
+    const share = db.prepare('SELECT id, type, password_hash FROM shares WHERE id = ?').get(req.params.id);
     if (!share) return res.status(404).json({ error: '分享不存在或已被删除' });
-    if (!share.password_hash) return res.json({ ok: true, url: '/s/' + share.id });
+    const url = '/s/' + share.id + (share.type === 'site' ? '/' : '') + getQueryString(req);
+    if (!share.password_hash) return res.json({ ok: true, url });
 
     const attemptKey = `${req.ip || req.socket.remoteAddress || 'unknown'}:${share.id}`;
     const attempt = getPasswordAttempt(passwordAttempts, attemptKey);
@@ -275,7 +276,7 @@ module.exports = function sharesRouter(db, config) {
 
     passwordAttempts.delete(attemptKey);
     setShareAccessCookie(res, share);
-    res.json({ ok: true, url: '/s/' + share.id });
+    res.json({ ok: true, url });
   });
 
   router.get('/s/:id', (req, res) => {
@@ -289,7 +290,11 @@ module.exports = function sharesRouter(db, config) {
         .setHeader('Cache-Control', 'no-store')
         .setHeader('Content-Security-Policy', CSP_PASSWORD)
         .type('html')
-        .send(passwordPage(share));
+        .send(passwordPage(share, getQueryString(req)));
+    }
+    if (share.type === 'site' && !req.path.endsWith('/')) {
+      // ZIP 站点是目录，尾斜杠用于正确解析相对资源路径。
+      return res.redirect(308, '/s/' + share.id + '/' + getQueryString(req));
     }
     db.prepare('UPDATE shares SET views = views + 1 WHERE id = ?').run(share.id);
     share.views += 1;
@@ -427,9 +432,14 @@ function getPasswordAttempt(attempts, key) {
   return attempt;
 }
 
-function passwordPage(share) {
+function getQueryString(req) {
+  const queryStart = req.originalUrl.indexOf('?');
+  return queryStart === -1 ? '' : req.originalUrl.slice(queryStart);
+}
+
+function passwordPage(share, query = '') {
   const title = escapeHtml(share.title || '受保护的分享');
-  const unlockUrl = '/s/' + share.id + '/unlock';
+  const unlockUrl = escapeHtml('/s/' + share.id + '/unlock' + query);
   return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} · 请输入密码</title><link rel="stylesheet" href="/css/style.css"></head><body><section class="login-wrap"><div class="card login-card"><div class="login-logo" aria-hidden="true">&#128274;</div><h1>${title}</h1><p class="muted">此分享受密码保护</p><form id="share-password-form" data-unlock-url="${unlockUrl}"><input class="input input-mono" id="share-password-input" type="password" autocomplete="current-password" placeholder="输入分享密码" aria-label="分享密码" autofocus><div class="form-error" id="share-password-error" role="alert"></div><button class="btn btn-primary btn-block" type="submit" id="share-password-button">解锁查看</button></form></div></section><script src="/js/share-unlock.js"></script></body></html>`;
 }
 
