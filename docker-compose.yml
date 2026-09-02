@@ -1,0 +1,27 @@
+services:
+  html-share:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      # 无需手动创建 ./data：挂载不存在时 Docker 自动创建，
+      # 容器 entrypoint 会自动把属主修正为应用用户
+      - ./data:/app/data
+    environment:
+      # 端口（容器内）
+      PORT: 3000
+      # 数据目录（容器内）
+      DATA_DIR: /app/data
+      # ZIP 上传大小上限（MB）
+      MAX_UPLOAD_MB: 50
+      # 文本内容大小上限（MB）
+      MAX_CONTENT_MB: 5
+      # ZIP 解压后总大小上限（MB）
+      MAX_SITE_TOTAL_MB: 300
+      # 每个密钥的分享数量上限
+      MAX_SHARES_PER_KEY: 200
+      # 置于反向代理后时取消注释（信任一跳代理，读取真实 IP）
+      # TRUST_PROXY: 1
+      # HTTPS 部署时取消注释（session cookie 仅走加密连接）
+      # COOKIE_SECURE: 1
+    restart: unless-stopped
