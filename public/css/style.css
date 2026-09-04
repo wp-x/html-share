@@ -667,7 +667,8 @@ code, .mono, .input-mono { font-family: var(--font-mono); }
 }
 .shot-card {
   flex: none;
-  width: clamp(720px, 72vw, 1080px);
+  width: min(72vw, 960px);
+  aspect-ratio: 16 / 10; /* 所有卡片完全相同尺寸，高度由比例推导 */
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -678,15 +679,20 @@ code, .mono, .input-mono { font-family: var(--font-mono); }
   border: 1px solid var(--line-strong);
   border-radius: 12px;
   box-shadow: 8px 8px 0 rgba(21, 21, 19, 0.1), 0 24px 56px rgba(21, 21, 19, 0.08);
-  transform: scale(0.985);
+  transform: scale(0.96);
   transform-origin: 50% 50%;
-  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  opacity: 0.55;
+  transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1), opacity 450ms cubic-bezier(0.22, 1, 0.36, 1), border-color 450ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 450ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-.shot-card.is-current {
+.shot-card.is-active {
   z-index: 1;
-  transform: translateY(-4px);
+  transform: scale(1);
+  opacity: 1;
   border-color: var(--ink);
   box-shadow: 8px 8px 0 rgba(184, 217, 0, 0.62), 0 28px 64px rgba(21, 21, 19, 0.12);
+}
+@media (hover: hover) {
+  .shot-card.is-active:hover { transform: scale(1) translateY(-3px); }
 }
 .shot-bar {
   display: flex;
@@ -712,19 +718,17 @@ code, .mono, .input-mono { font-family: var(--font-mono); }
   text-overflow: ellipsis;
 }
 .shot-body {
-  flex: none;
+  flex: 1;
   min-height: 0;
   overflow: clip;
   background: var(--paper-soft);
-  opacity: 0.68;
-  transition: opacity 220ms ease;
 }
-.shot-card.is-current .shot-body { opacity: 1; }
 .shot-body img {
   display: block;
   width: 100%;
-  height: auto;
-  max-width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center; /* 截图顶部对齐裁切，浏览器 UI 保持可见 */
   -webkit-user-drag: none;
   user-select: none;
 }
@@ -1418,7 +1422,7 @@ code, .mono, .input-mono { font-family: var(--font-mono); }
   .kicker { padding-top: 0; }
   .section-lede-cn { grid-column: 1; }
   /* 窄屏保留下一张的边缘，明确这里可以继续横向浏览 */
-  .shot-card { width: calc(100vw - 72px); }
+  .shot-card { width: calc(100vw - 40px); }
   .hs-track { gap: 20px; }
   .control-section { padding: 14vh 20px; }
   .control-grid { grid-template-columns: 1fr; }
@@ -1458,7 +1462,7 @@ code, .mono, .input-mono { font-family: var(--font-mono); }
   .showcase-head { padding: 0 16px; }
   .hs-viewport { scroll-padding-inline: 16px; }
   .hs-track { gap: 16px; padding: 4px 16px 10px; }
-  .shot-card { width: calc(100vw - 56px); }
+  .shot-card { width: calc(100vw - 40px); }
   .shot-cap { min-height: 48px; padding: 10px 12px; }
   .hs-footer { gap: 14px; max-width: none; margin-top: 20px; padding: 0 16px; }
   .hs-hint { font-size: 9px; letter-spacing: 0.06em; white-space: normal; }
@@ -1516,7 +1520,7 @@ code, .mono, .input-mono { font-family: var(--font-mono); }
   .reveal-ready [data-reveal] { opacity: 1; transform: none; }
   .control-card:hover { transform: none; }
   .shot-card,
-  .shot-card.is-current,
+  .shot-card.is-active,
   .hs-arrow:hover:not(:disabled),
   .hs-arrow:active:not(:disabled) { transform: none; }
   .hs-dot { animation: none; }

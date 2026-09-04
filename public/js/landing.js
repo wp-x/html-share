@@ -198,7 +198,7 @@
     function setActive(index) {
       activeIndex = Math.min(cards.length - 1, Math.max(0, index));
       cards.forEach(function (card, i) {
-        card.classList.toggle('is-current', i === activeIndex);
+        card.classList.toggle('is-active', i === activeIndex);
       });
       if (current) current.textContent = ('0' + (activeIndex + 1)).slice(-2);
       if (prev) prev.disabled = activeIndex === 0;

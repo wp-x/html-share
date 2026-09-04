@@ -60,15 +60,15 @@ function landingPage(key) {
   const marqueeItems = ['HTML', 'MARKDOWN', 'TEXT', 'CSV', 'JSON', 'ZIP SITE', 'PASSWORD LOCK', 'CUSTOM PATH'];
   const marqueeChunk = `<span class="marquee-chunk">${marqueeItems.map((t) => `<span>${t}</span><i aria-hidden="true">✦</i>`).join('')}</span>`;
   const shots = [
-    { src: '/assets/product-dashboard.png', w: 5760, h: 3000, url: 'your.host/dashboard', cap: 'WORKSPACE — 创建与管理', alt: 'HTML Share 工作台界面截图' },
-    { src: '/assets/product-doc.png', w: 5760, h: 2400, url: 'your.host/s/launch-notes', cap: 'MARKDOWN — 长文排版', alt: 'Markdown 分享页渲染效果截图' },
-    { src: '/assets/product-table.png', w: 5760, h: 2400, url: 'your.host/s/q3-metrics', cap: 'CSV — 表头冻结表格', alt: 'CSV 表格分享页渲染效果截图' },
+    { src: '/assets/product-dashboard.png', url: 'your.host/dashboard', name: 'WORKSPACE', desc: '创建与管理', alt: 'HTML Share 工作台界面截图' },
+    { src: '/assets/product-doc.png', url: 'your.host/s/launch-notes', name: 'MARKDOWN', desc: '长文排版', alt: 'Markdown 分享页渲染效果截图' },
+    { src: '/assets/product-table.png', url: 'your.host/s/q3-metrics', name: 'CSV TABLE', desc: '表头冻结表格', alt: 'CSV 表格分享页渲染效果截图' },
   ];
   const shotCards = shots.map((s, i) => `
       <figure class="shot-card">
         <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span class="shot-url mono">${s.url}</span></div>
-        <div class="shot-body"><img src="${s.src}" alt="${s.alt}" width="${s.w}" height="${s.h}" loading="lazy" draggable="false"></div>
-        <figcaption class="shot-cap"><span>0${i + 1}</span><span>${s.cap}</span></figcaption>
+        <div class="shot-body"><img src="${s.src}" alt="${s.alt}" loading="lazy" draggable="false"></div>
+        <figcaption class="shot-cap"><span>0${i + 1} — ${s.name}</span><span>${s.desc}</span></figcaption>
       </figure>`).join('');
   const formats = [
     { n: '01', t: 'HTML', d: '完整页面，原样发布', c: '&lt;/&gt;' },
