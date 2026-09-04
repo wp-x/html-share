@@ -45,7 +45,7 @@ function shell({ title, key, body, scripts = '', showLoginLink = true, pageClass
   <div class="site-footer-inner">
     <div class="footer-top">
       <a class="footer-brand" href="/"><span class="footer-brand-main">HTML SHARE<i aria-hidden="true">.</i></span><span class="footer-brand-sub">CONTENT IN / LINK OUT</span></a>
-      <p class="footer-note">HTML、Markdown、Text、CSV、JSON 与 ZIP 静态站点分享工具。粘贴即发布，链接即作品。</p>
+      <p class="footer-note">粘贴即发布，链接即作品。</p>
     </div>
     <div class="footer-bottom"><span>&copy; ${new Date().getFullYear()} HTML SHARE</span><span>MADE FOR CREATORS / SELF-HOSTED</span></div>
   </div>
@@ -71,29 +71,46 @@ function landingPage(key) {
         <div class="shot-body"><img src="${s.src}" alt="${s.alt}" width="${s.w}" height="${s.h}" loading="lazy"></div>
         <figcaption class="shot-cap"><span>0${i + 1}</span><span>${s.cap}</span></figcaption>
       </figure>`).join('');
+  const formats = [
+    { n: '01', t: 'HTML', d: '完整页面，原样发布', c: '&lt;/&gt;' },
+    { n: '02', t: 'Markdown', d: '长文排版，代码高亮', c: '# md' },
+    { n: '03', t: 'Text', d: '片段高亮，一键复制', c: 'txt' },
+    { n: '04', t: 'CSV', d: '冻结表头，自动截断', c: ',,,' },
+    { n: '05', t: 'JSON', d: '校验格式化，易读易拷', c: '{ }' },
+    { n: '06', t: 'ZIP Site', d: '整站解压，直接上线', c: '.zip' },
+  ];
+  const formatCards = formats.map((f) => `
+      <article class="format-card" data-glass data-reveal>
+        <div class="format-top"><span class="format-number">${f.n}</span><code>${f.c}</code></div>
+        <h3>${f.t}</h3>
+        <p>${f.d}</p>
+      </article>`).join('');
+  const stats = [
+    { n: '06', label: '支持格式' },
+    { n: '10s', label: '平均发布' },
+    { n: '0', label: '部署配置' },
+  ];
+  const statItems = stats.map((s) => `
+      <div class="stat-item"><span class="stat-value" data-count="${s.n}">${s.n}</span><span class="stat-tag mono">${s.label}</span></div>`).join('');
   const body = `
+<div class="contour-bg" aria-hidden="true"><canvas data-contours></canvas><div class="contour-grain"></div></div>
 <section class="hero-track" data-hero data-nav-theme-target="light">
   <div class="hero-pin">
-    <div class="hero-meta" aria-hidden="true"><span>AI CONTENT DEPLOYMENT</span><span>NODE / READY</span></div>
     <div class="hero-inner">
       <div class="hero-copy" data-hero-copy>
-        <p class="hero-eyebrow" data-hero-fade>CONTENT IN — LINK OUT</p>
+        <p class="hero-badge" data-hero-fade><span class="hs-dot" aria-hidden="true"></span><span class="mono">CONTENT IN — LINK OUT</span><i aria-hidden="true">·</i>即贴即发</p>
         <h1 class="hero-title" data-hero-title>
-          <span class="ht-line" lang="en">HTML</span>
-          <span class="ht-line" lang="en">SHARE<i aria-hidden="true">.</i></span>
+          <span class="ht-line" lang="en">HTML<i aria-hidden="true">/</i>SHARE</span>
         </h1>
-        <p class="hero-lede" data-hero-fade>把 AI 生成的内容，从文件变成网址。粘贴代码或上传 ZIP，几秒内拿到一条可以直接发出去的链接——无需部署脚本，无需配置服务器。</p>
+        <p class="hero-lede" data-hero-fade>粘贴内容，三秒出链接。</p>
         <div class="hero-cta-row" data-hero-fade>
-          <a class="btn btn-primary btn-lg" href="${ctaHref}">${rollLabel(key ? '进入工作台' : '开始发布')}<span aria-hidden="true">&#8599;</span></a>
-          <a class="hero-text-link" href="#formats">了解支持的格式</a>
+          <a class="btn btn-primary btn-lg" data-magnetic href="${ctaHref}">${rollLabel(key ? '进入工作台' : '开始发布')}<span aria-hidden="true">&#8599;</span></a>
+          <a class="hero-text-link" href="#formats">看看支持的格式</a>
         </div>
       </div>
-      <figure class="hero-visual" data-hero-visual>
-        <img src="/assets/hero-visual.jpg" alt="暖米白色 3D 流体层叠曲面渲染图" width="2400" height="1600" fetchpriority="high">
-      </figure>
-      <div class="hero-status mono" data-hero-fade><span class="hs-dot" aria-hidden="true"></span>ONLINE — DEPLOY IN SECONDS</div>
+      <div class="hero-stats" data-hero-fade>${statItems}
+      </div>
     </div>
-    <a class="hero-scroll" href="#formats"><span>SCROLL</span><span aria-hidden="true">&#8595;</span></a>
   </div>
 </section>
 
@@ -101,43 +118,21 @@ function landingPage(key) {
   <div class="marquee-track">${marqueeChunk.repeat(4)}</div>
 </div>
 
-<section class="manifesto" data-nav-theme-target="light">
-  <div class="manifesto-inner">
-    <p class="manifesto-label" data-reveal>MANIFESTO — 为什么存在</p>
-    <div class="manifesto-lines" data-highlines>
-      <p class="ml-line">AI 写了内容，</p>
-      <p class="ml-line">却不替你<em>发布</em>。</p>
-      <p class="ml-line">中间这一步，我们删掉。</p>
-    </div>
-  </div>
-</section>
-
 <section class="section formats-section" id="formats" data-nav-theme-target="light">
   <header class="section-head">
-    <span class="kicker" data-reveal>01 / FORMATS</span>
-    <h2 data-highlines><span class="ml-line">六条输入轨道，</span><span class="ml-line"><em>同一个发布终点。</em></span></h2>
-    <p class="section-lede" data-reveal>完整页面、结构化文档、代码片段、表格数据、整站打包——无论内容以什么形态交付，都走同一条发布路径。</p>
+    <span class="kicker" data-reveal>01 // FORMATS</span>
+    <h2 data-highlines><span class="ml-line" lang="en">PASTE</span><span class="ml-line" lang="en"><em>ANYTHING.</em></span></h2>
+    <p class="section-lede-cn" data-reveal>六种格式，一条链接。</p>
   </header>
-  <div class="formats-grid">
-    <figure class="formats-visual" data-split-left>
-      <img src="/assets/visual-formats.jpg" alt="白银液态金属漩涡 3D 渲染图" width="2400" height="1319" loading="lazy">
-    </figure>
-    <div class="format-list" data-split-right>
-      <article class="format-row"><span class="format-number">01</span><div class="format-body"><h3>HTML</h3><p>完整页面原样输出，脚本、样式与交互保持不变，所见即所得。</p></div><code>&lt;/&gt;</code><span class="format-arrow" aria-hidden="true">&#8594;</span></article>
-      <article class="format-row"><span class="format-number">02</span><div class="format-body"><h3>Markdown</h3><p>服务端安全渲染，代码高亮与移动端排版自动就位，长文读起来也舒服。</p></div><code># md</code><span class="format-arrow" aria-hidden="true">&#8594;</span></article>
-      <article class="format-row"><span class="format-number">03</span><div class="format-body"><h3>Text</h3><p>纯文本与代码片段自动识别语言、语法高亮，带行号，复制下载一键完成。</p></div><code>txt</code><span class="format-arrow" aria-hidden="true">&#8594;</span></article>
-      <article class="format-row"><span class="format-number">04</span><div class="format-body"><h3>CSV</h3><p>表格数据解析为可阅读的表头冻结表格，超大文件自动截断并支持原文下载。</p></div><code>,,,</code><span class="format-arrow" aria-hidden="true">&#8594;</span></article>
-      <article class="format-row"><span class="format-number">05</span><div class="format-body"><h3>JSON</h3><p>先校验，再格式化，生成带行号、适合阅读、复制和下载的数据页。</p></div><code>{ }</code><span class="format-arrow" aria-hidden="true">&#8594;</span></article>
-      <article class="format-row"><span class="format-number">06</span><div class="format-body"><h3>ZIP Site</h3><p>校验并解压完整静态站点，站内相对资源路径原样部署、直接可用。</p></div><code>.zip</code><span class="format-arrow" aria-hidden="true">&#8594;</span></article>
-    </div>
+  <div class="formats-grid">${formatCards}
   </div>
 </section>
 
 <section class="showcase" id="showcase" data-hscroll data-nav-theme-target="light">
   <header class="section-head showcase-head">
-    <span class="kicker" data-reveal>02 / SHOWCASE</span>
-    <h2 data-highlines><span class="ml-line">发布之后，</span><span class="ml-line"><em>长这样。</em></span></h2>
-    <p class="section-lede" data-reveal>真实界面，无摆拍。从工作台到阅读页，每一步都替你打磨好了。</p>
+    <span class="kicker" data-reveal>02 // SHOWCASE</span>
+    <h2 data-highlines><span class="ml-line" lang="en">REAL</span><span class="ml-line" lang="en"><em>SCREENS.</em></span></h2>
+    <p class="section-lede-cn" data-reveal>发布之后，长这样。</p>
   </header>
   <div class="hs-viewport">
     <div class="hs-track">${shotCards}
@@ -145,25 +140,29 @@ function landingPage(key) {
   </div>
 </section>
 
+<figure class="visual-banner" data-nav-theme-target="light" data-banner>
+  <img src="/assets/hero-visual.jpg" alt="暖米白色 3D 流体层叠曲面渲染图" width="2400" height="1600" loading="lazy">
+</figure>
+
 <section class="control-section" data-nav-theme-target="dark">
   <img class="control-bg" src="/assets/visual-control-dark.jpg" alt="" width="2400" height="1600" loading="lazy" aria-hidden="true">
   <div class="control-inner">
     <header class="section-head">
-      <span class="kicker" data-reveal>03 / CONTROL</span>
-      <h2 data-highlines><span class="ml-line">链接，</span><span class="ml-line"><em>按你的方式抵达。</em></span></h2>
-      <p class="section-lede" data-reveal>默认自动生成短链，速度优先；需要时，路径与访问权限都由你决定。</p>
+      <span class="kicker" data-reveal>03 // CONTROL</span>
+      <h2 data-highlines><span class="ml-line" lang="en">YOUR</span><span class="ml-line" lang="en"><em>RULES.</em></span></h2>
+      <p class="section-lede-cn" data-reveal>链接，按你的方式抵达。</p>
     </header>
     <div class="control-grid">
-      <article class="control-card" data-stagger-col>
+      <article class="control-card" data-glass data-stagger-col>
         <span class="control-tag">CUSTOM PATH</span>
         <h3>自定义路径</h3>
-        <p>把随机短链换成可读、可记、可以印在幻灯片上的地址。</p>
+        <p>随机短链，换成可读的地址。</p>
         <p class="control-demo mono">your.host/s/<b>launch-page</b></p>
       </article>
-      <article class="control-card" data-stagger-col>
+      <article class="control-card" data-glass data-stagger-col>
         <span class="control-tag">PASSWORD</span>
         <h3>密码保护</h3>
-        <p>给只想小范围公开的内容加一道锁，访问者输入密码后才能查看。</p>
+        <p>加一道锁，小范围可见。</p>
         <p class="control-demo mono">PROTECTED / <b>&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</b></p>
       </article>
     </div>
@@ -173,10 +172,10 @@ function landingPage(key) {
 <section class="final-cta" data-nav-theme-target="light">
   <div class="final-cta-inner">
     <div>
-      <span class="kicker" data-reveal>04 / PUBLISH</span>
+      <span class="kicker" data-reveal>04 // PUBLISH</span>
       <h2 data-highlines><span class="ml-line">下一条链接，</span><span class="ml-line">现在生成。</span></h2>
     </div>
-    <a class="btn btn-dark btn-lg" href="${ctaHref}">${rollLabel(key ? '打开工作台' : '使用访问密钥')}<span aria-hidden="true">&#8599;</span></a>
+    <a class="btn btn-dark btn-lg" data-magnetic href="${ctaHref}">${rollLabel(key ? '打开工作台' : '使用访问密钥')}<span aria-hidden="true">&#8599;</span></a>
   </div>
 </section>`;
   return shell({
