@@ -11,7 +11,7 @@ const {
   loginRateLimiter,
 } = require('../auth');
 
-const BRAND_MARK = '<span class="brand-mark" aria-hidden="true">H/S</span>';
+const BRAND_WORD = 'HTML<i aria-hidden="true">/</i>SHARE';
 
 function rollLabel(text) {
   const safe = escapeHtml(text);
@@ -35,8 +35,7 @@ function shell({ title, key, body, scripts = '', showLoginLink = true, pageClass
 <a class="skip-link" href="#main-content">跳到主要内容</a>
 <nav class="nav" aria-label="主导航">
   <div class="nav-inner">
-    <a class="nav-logo" href="/" aria-label="HTML Share 首页"><span class="nav-logo-main">HTML</span><span class="nav-logo-sub">SHARE / PUBLISH</span></a>
-    <a class="nav-center" href="/" aria-label="返回首页">${BRAND_MARK}</a>
+    <a class="nav-logo" href="/" aria-label="HTML Share 首页"><span class="nav-logo-main">${BRAND_WORD}</span></a>
     <div class="nav-links">${authedLinks}</div>
   </div>
 </nav>
@@ -134,15 +133,19 @@ function landingPage(key) {
     <h2 data-highlines><span class="ml-line" lang="en">REAL</span><span class="ml-line" lang="en"><em>SCREENS.</em></span></h2>
     <p class="section-lede-cn" data-reveal>发布之后，长这样。</p>
   </header>
-  <div class="hs-viewport">
+  <div class="hs-viewport" tabindex="0" role="region" aria-label="界面截图横向浏览">
     <div class="hs-track">${shotCards}
     </div>
   </div>
+  <div class="hs-footer">
+    <div class="hs-progress" aria-hidden="true"><i class="hs-progress-fill"></i></div>
+    <div class="hs-controls">
+      <span class="hs-count mono" aria-live="polite"><b data-hs-current>01</b><span> / ${String(shots.length).padStart(2, '0')}</span></span>
+      <button class="hs-arrow" type="button" data-hs-prev aria-label="上一张界面截图" title="上一张">&#8592;</button>
+      <button class="hs-arrow" type="button" data-hs-next aria-label="下一张界面截图" title="下一张">&#8594;</button>
+    </div>
+  </div>
 </section>
-
-<figure class="visual-banner" data-nav-theme-target="light" data-banner>
-  <img src="/assets/hero-visual.jpg" alt="暖米白色 3D 流体层叠曲面渲染图" width="2400" height="1600" loading="lazy">
-</figure>
 
 <section class="control-section" data-nav-theme-target="dark">
   <img class="control-bg" src="/assets/visual-control-dark.jpg" alt="" width="2400" height="1600" loading="lazy" aria-hidden="true">
@@ -192,7 +195,7 @@ function loginPage() {
   const body = `
 <section class="login-wrap">
   <div class="card login-card">
-    <div class="login-logo">${BRAND_MARK}</div>
+    <div class="login-logo"><span class="brand-word">${BRAND_WORD}</span></div>
     <span class="auth-tag">ACCESS KEY</span>
     <h1>欢迎回来</h1>
     <p class="muted">请输入你的访问密钥</p>

@@ -169,10 +169,150 @@
     });
   }
 
+  /* ---------- SHOWCASE 原生横向滚动：拖拽、滚轮、键盘与分页控制 ----------
+     滚动本体由 CSS overflow-x + scroll-snap 完成，无 JS 也完整可用。 */
+  function initShowcaseScroll() {
+    var section = document.querySelector('[data-hscroll]');
+    if (!section) return;
+    var viewport = section.querySelector('.hs-viewport');
+    var fill = section.querySelector('.hs-progress-fill');
+    var current = section.querySelector('[data-hs-current]');
+    var prev = section.querySelector('[data-hs-prev]');
+    var next = section.querySelector('[data-hs-next]');
+    var cards = Array.prototype.slice.call(section.querySelectorAll('.shot-card'));
+    if (!viewport || !cards.length) return;
+
+    var activeIndex = 0;
+    var ticking = false;
+
+    function cardTarget(index) {
+      var card = cards[index];
+      var target = card.offsetLeft - ((viewport.clientWidth - card.offsetWidth) / 2);
+      var max = viewport.scrollWidth - viewport.clientWidth;
+      return Math.min(max, Math.max(0, target));
+    }
+
+    function setActive(index) {
+      activeIndex = Math.min(cards.length - 1, Math.max(0, index));
+      cards.forEach(function (card, i) {
+        card.classList.toggle('is-current', i === activeIndex);
+      });
+      if (current) current.textContent = ('0' + (activeIndex + 1)).slice(-2);
+      if (prev) prev.disabled = activeIndex === 0;
+      if (next) next.disabled = activeIndex === cards.length - 1;
+    }
+
+    function updateUi() {
+      ticking = false;
+      var viewportCenter = viewport.scrollLeft + (viewport.clientWidth / 2);
+      var nearestIndex = 0;
+      var nearestDistance = Infinity;
+      cards.forEach(function (card, i) {
+        var cardCenter = card.offsetLeft + (card.offsetWidth / 2);
+        var distance = Math.abs(cardCenter - viewportCenter);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestIndex = i;
+        }
+      });
+      setActive(nearestIndex);
+
+      if (fill) {
+        var max = viewport.scrollWidth - viewport.clientWidth;
+        var ratio = max > 0 ? viewport.scrollLeft / max : 1;
+        var minRatio = viewport.clientWidth / Math.max(viewport.scrollWidth, 1);
+        var shown = Math.max(ratio, 0) * (1 - minRatio) + minRatio;
+        fill.style.transform = 'scaleX(' + Math.min(1, Math.max(minRatio, shown)) + ')';
+      }
+    }
+
+    function requestUiUpdate() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(updateUi);
+    }
+
+    function goTo(index) {
+      index = Math.min(cards.length - 1, Math.max(0, index));
+      viewport.scrollTo({
+        left: cardTarget(index),
+        behavior: reduceMotion ? 'auto' : 'smooth'
+      });
+      setActive(index);
+    }
+
+    viewport.addEventListener('scroll', requestUiUpdate, { passive: true });
+    window.addEventListener('resize', requestUiUpdate);
+    window.addEventListener('load', requestUiUpdate);
+
+    if (prev) prev.addEventListener('click', function () { goTo(activeIndex - 1); });
+    if (next) next.addEventListener('click', function () { goTo(activeIndex + 1); });
+
+    viewport.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goTo(activeIndex - 1);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        goTo(activeIndex + 1);
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        goTo(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        goTo(cards.length - 1);
+      }
+    });
+
+    viewport.addEventListener('wheel', function (e) {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      var max = viewport.scrollWidth - viewport.clientWidth;
+      var atStart = viewport.scrollLeft <= 1;
+      var atEnd = viewport.scrollLeft >= max - 1;
+      if ((atStart && e.deltaY < 0) || (atEnd && e.deltaY > 0)) return;
+      e.preventDefault();
+      viewport.scrollLeft += e.deltaY;
+    }, { passive: false });
+
+    // 鼠标拖拽横向浏览，触屏仍使用浏览器原生滑动。
+    viewport.addEventListener('pointerdown', function (e) {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      var startX = e.clientX;
+      var startScroll = viewport.scrollLeft;
+      var moved = false;
+      viewport.classList.add('hs-dragging');
+      viewport.setPointerCapture(e.pointerId);
+      function onMove(ev) {
+        var dx = ev.clientX - startX;
+        if (Math.abs(dx) > 4) moved = true;
+        viewport.scrollLeft = startScroll - dx;
+      }
+      function onUp() {
+        viewport.classList.remove('hs-dragging');
+        viewport.removeEventListener('pointermove', onMove);
+        viewport.removeEventListener('pointerup', onUp);
+        viewport.removeEventListener('pointercancel', onUp);
+        requestUiUpdate();
+        if (moved) {
+          viewport.addEventListener('click', function (ce) {
+            ce.preventDefault();
+            ce.stopPropagation();
+          }, { capture: true, once: true });
+        }
+      }
+      viewport.addEventListener('pointermove', onMove);
+      viewport.addEventListener('pointerup', onUp);
+      viewport.addEventListener('pointercancel', onUp);
+    });
+
+    updateUi();
+  }
+
   initContours();
   initSpotlight();
   initRollLabels();
   initNavTheme();
+  initShowcaseScroll();
 
   /* ---------- 降级出口：reduced-motion 保持静态；GSAP 缺失时退回 IO reveal ---------- */
   if (reduceMotion) return;
@@ -343,18 +483,6 @@
     });
   }
 
-  /* ---------- 视差横幅图（hero-visual.jpg，scrub 缓慢上移） ---------- */
-  function initBanner() {
-    var banner = document.querySelector('[data-banner]');
-    if (!banner) return;
-    var img = banner.querySelector('img');
-    if (!img) return;
-    gsap.fromTo(img, { yPercent: -16 }, {
-      yPercent: 0, ease: 'none',
-      scrollTrigger: { trigger: banner, start: 'top bottom', end: 'bottom top', scrub: true },
-    });
-  }
-
   /* ---------- 磁性按钮：指针吸附 ≤6px + 内部文字反向补偿 + 弹性回位 ---------- */
   function initMagnetic() {
     if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
@@ -433,49 +561,10 @@
   initHero();
   initMarquee();
   initHighLines();
-  initBanner();
-  initHorizontal();
   initStaggerColumns();
   initMagnetic();
   initStats();
   initReveals();
-
-  /* ---------- SHOWCASE 横向滚动（仅 ≥992px）+ 图内反向视差 ---------- */
-  function initHorizontal() {
-    var section = document.querySelector('[data-hscroll]');
-    if (!section || !window.matchMedia('(min-width: 992px)').matches) return;
-    var track = section.querySelector('.hs-track');
-    if (!track) return;
-    var distance = function () { return Math.max(0, track.scrollWidth - window.innerWidth); };
-    var tween = gsap.to(track, {
-      x: function () { return -distance(); },
-      ease: 'none',
-      scrollTrigger: {
-        trigger: section,
-        start: 'top top',
-        end: function () { return '+=' + distance(); },
-        pin: true,
-        scrub: true,
-        invalidateOnRefresh: true,
-        anticipatePin: 1,
-      },
-    });
-    Array.prototype.forEach.call(track.querySelectorAll('.shot-card'), function (card) {
-      var img = card.querySelector('.shot-body img');
-      if (!img) return;
-      gsap.fromTo(img, { x: '-4rem' }, {
-        x: '4rem',
-        ease: 'none',
-        scrollTrigger: {
-          trigger: card,
-          containerAnimation: tween,
-          start: 'left right',
-          end: 'right left',
-          scrub: true,
-        },
-      });
-    });
-  }
 
   /* ---------- 网格错位视差（CONTROL 卡片，列序 × 5rem scrub 归位） ---------- */
   function initStaggerColumns() {

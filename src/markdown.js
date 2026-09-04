@@ -54,6 +54,10 @@ function sanitizeMarkdown(html) {
 }
 
 const PAGE_CSS = `
+@font-face{
+  font-family:'Anton'; font-style:normal; font-weight:400; font-display:swap;
+  src:url('/vendor/fonts/anton-latin-400-normal.woff2') format('woff2');
+}
 :root{
   color-scheme: light dark;
   --bg:#f2efe9; --bg-soft:#eae6dc; --card:#faf8f3;
@@ -87,13 +91,11 @@ body{
   display:flex; align-items:center; gap:14px; flex-wrap:wrap;
 }
 .brandbar .logo{
-  font-weight:900; font-size:15px; letter-spacing:-.02em; text-transform:uppercase;
+  font-family:'Anton',"Arial Narrow",sans-serif; font-style:italic; font-weight:400;
+  font-size:17px; letter-spacing:.01em; line-height:1; text-transform:uppercase;
   text-decoration:none; color:var(--text);
 }
-.brandbar .logo span{
-  background:var(--lime); color:#151513;
-  padding:1px 7px 2px; border-radius:6px; margin-left:2px;
-}
+.brandbar .logo i{ font-style:italic; color:var(--lime-deep); }
 .brandbar .doc-title{
   font-size:12.5px; color:var(--text-2);
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
@@ -235,7 +237,7 @@ ${extraHead}
 <body>
 <header class="brandbar">
   <div class="inner">
-    <a class="logo" href="/">HTML <span>Share</span></a>
+    <a class="logo" href="/">HTML<i>/</i>SHARE</a>
     <span class="doc-title">${escapeHtml(title)}</span>
   </div>
 </header>
