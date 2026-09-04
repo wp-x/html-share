@@ -67,7 +67,7 @@ function landingPage(key) {
   const shotCards = shots.map((s, i) => `
       <figure class="shot-card">
         <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span class="shot-url mono">${s.url}</span></div>
-        <div class="shot-body"><img src="${s.src}" alt="${s.alt}" width="${s.w}" height="${s.h}" loading="lazy"></div>
+        <div class="shot-body"><img src="${s.src}" alt="${s.alt}" width="${s.w}" height="${s.h}" loading="lazy" draggable="false"></div>
         <figcaption class="shot-cap"><span>0${i + 1}</span><span>${s.cap}</span></figcaption>
       </figure>`).join('');
   const formats = [
@@ -130,20 +130,23 @@ function landingPage(key) {
 <section class="showcase" id="showcase" data-hscroll data-nav-theme-target="light">
   <header class="section-head showcase-head">
     <span class="kicker" data-reveal>02 // SHOWCASE</span>
-    <h2 data-highlines><span class="ml-line" lang="en">REAL</span><span class="ml-line" lang="en"><em>SCREENS.</em></span></h2>
-    <p class="section-lede-cn" data-reveal>发布之后，长这样。</p>
+    <div class="showcase-title">
+      <h2 data-highlines><span class="ml-line" lang="en">REAL</span><span class="ml-line" lang="en"><em>SCREENS.</em></span></h2>
+      <p class="section-lede-cn" data-reveal>发布之后，长这样。</p>
+    </div>
+    <div class="hs-arrows">
+      <button class="hs-arrow" type="button" data-hs-prev aria-label="上一张界面截图" title="上一张" disabled>&#8249;</button>
+      <button class="hs-arrow" type="button" data-hs-next aria-label="下一张界面截图" title="下一张" disabled>&#8250;</button>
+    </div>
   </header>
-  <div class="hs-viewport" tabindex="0" role="region" aria-label="界面截图横向浏览">
+  <div class="hs-viewport" tabindex="0" role="region" aria-label="界面截图横向浏览" data-lenis-prevent-wheel>
     <div class="hs-track">${shotCards}
     </div>
   </div>
   <div class="hs-footer">
+    <p class="hs-hint">DRAG / SCROLL<i aria-hidden="true">&#8594;</i>按住拖拽，或点箭头</p>
     <div class="hs-progress" aria-hidden="true"><i class="hs-progress-fill"></i></div>
-    <div class="hs-controls">
-      <span class="hs-count mono" aria-live="polite"><b data-hs-current>01</b><span> / ${String(shots.length).padStart(2, '0')}</span></span>
-      <button class="hs-arrow" type="button" data-hs-prev aria-label="上一张界面截图" title="上一张">&#8592;</button>
-      <button class="hs-arrow" type="button" data-hs-next aria-label="下一张界面截图" title="下一张">&#8594;</button>
-    </div>
+    <span class="hs-count mono" aria-live="polite"><b data-hs-current>01</b><span> / ${String(shots.length).padStart(2, '0')}</span></span>
   </div>
 </section>
 

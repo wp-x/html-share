@@ -169,8 +169,9 @@
     });
   }
 
-  /* ---------- SHOWCASE 原生横向滚动：拖拽、滚轮、键盘与分页控制 ----------
-     滚动本体由 CSS overflow-x + scroll-snap 完成，无 JS 也完整可用。 */
+  /* ---------- SHOWCASE 原生横向滚动：箭头分页、拖拽、键盘与进度指示 ----------
+     滚动本体由 CSS overflow-x + scroll-snap 完成，无 JS 也完整可用。
+     纵向滚轮不再拦截：viewport 带 data-lenis-prevent-wheel，deltaY 原样穿透到页面。 */
   function initShowcaseScroll() {
     var section = document.querySelector('[data-hscroll]');
     if (!section) return;
@@ -181,6 +182,8 @@
     var next = section.querySelector('[data-hs-next]');
     var cards = Array.prototype.slice.call(section.querySelectorAll('.shot-card'));
     if (!viewport || !cards.length) return;
+
+    section.classList.add('hs-live'); // 箭头按钮只在 JS 可用时出现
 
     var activeIndex = 0;
     var ticking = false;
@@ -217,8 +220,12 @@
       });
       setActive(nearestIndex);
 
+      var max = viewport.scrollWidth - viewport.clientWidth;
+      // 边缘渐隐 mask：到端点时收起对应侧的渐隐
+      viewport.classList.toggle('hs-at-start', viewport.scrollLeft <= 2);
+      viewport.classList.toggle('hs-at-end', viewport.scrollLeft >= max - 2);
+
       if (fill) {
-        var max = viewport.scrollWidth - viewport.clientWidth;
         var ratio = max > 0 ? viewport.scrollLeft / max : 1;
         var minRatio = viewport.clientWidth / Math.max(viewport.scrollWidth, 1);
         var shown = Math.max(ratio, 0) * (1 - minRatio) + minRatio;
@@ -234,27 +241,28 @@
 
     function goTo(index) {
       index = Math.min(cards.length - 1, Math.max(0, index));
-      viewport.scrollTo({
-        left: cardTarget(index),
-        behavior: reduceMotion ? 'auto' : 'smooth'
-      });
-      setActive(index);
+      viewport.scrollTo({ left: cardTarget(index), behavior: reduceMotion ? 'auto' : 'smooth' });
+      updateUi();
+    }
+
+    function stepBy(delta) {
+      goTo(activeIndex + delta);
     }
 
     viewport.addEventListener('scroll', requestUiUpdate, { passive: true });
     window.addEventListener('resize', requestUiUpdate);
     window.addEventListener('load', requestUiUpdate);
 
-    if (prev) prev.addEventListener('click', function () { goTo(activeIndex - 1); });
-    if (next) next.addEventListener('click', function () { goTo(activeIndex + 1); });
+    if (prev) prev.addEventListener('click', function () { stepBy(-1); });
+    if (next) next.addEventListener('click', function () { stepBy(1); });
 
     viewport.addEventListener('keydown', function (e) {
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        goTo(activeIndex - 1);
+        stepBy(-1);
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
-        goTo(activeIndex + 1);
+        stepBy(1);
       } else if (e.key === 'Home') {
         e.preventDefault();
         goTo(0);
@@ -264,15 +272,7 @@
       }
     });
 
-    viewport.addEventListener('wheel', function (e) {
-      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-      var max = viewport.scrollWidth - viewport.clientWidth;
-      var atStart = viewport.scrollLeft <= 1;
-      var atEnd = viewport.scrollLeft >= max - 1;
-      if ((atStart && e.deltaY < 0) || (atEnd && e.deltaY > 0)) return;
-      e.preventDefault();
-      viewport.scrollLeft += e.deltaY;
-    }, { passive: false });
+    viewport.addEventListener('dragstart', function (e) { e.preventDefault(); });
 
     // 鼠标拖拽横向浏览，触屏仍使用浏览器原生滑动。
     viewport.addEventListener('pointerdown', function (e) {
