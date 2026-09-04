@@ -107,7 +107,7 @@ app.use((err, req, res, next) => {
 });
 
 function notFoundPage(text) {
-  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${text}</title><link rel="stylesheet" href="/css/style.css"></head><body><section class="login-wrap"><div class="card login-card"><h1>400</h1><p class="muted">${text}</p><a class="btn btn-primary" href="/">返回首页</a></div></section></body></html>`;
+  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${text}</title><link rel="stylesheet" href="/css/style.css"></head><body class="page-auth"><section class="login-wrap"><div class="card login-card"><div class="login-logo" aria-hidden="true"><span class="brand-mark">H/S</span></div><span class="auth-tag">Error / 400</span><h1>400</h1><p class="muted">${text}</p><a class="btn btn-primary" href="/">返回首页</a></div></section></body></html>`;
 }
 
 app.listen(config.PORT, () => {

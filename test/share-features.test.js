@@ -237,6 +237,73 @@ test('ZIP sites protect both the index and static assets', async () => {
   assert.equal(finalShares.data.shares.find((share) => share.id === 'private-site').views, 1);
 });
 
+test('Text shares render highlighted lines with line numbers and CSP', async () => {
+  const content = 'const x = 1;\nfunction add(a, b) {\n  return a + b;\n}';
+  const created = await jsonRequest('/api/shares', {
+    method: 'POST',
+    cookie: sessionCookie,
+    body: { type: 'text', content, custom_slug: 'text-launch' },
+  });
+  assert.equal(created.response.status, 200);
+  assert.equal(created.data.url, '/s/text-launch');
+
+  const page = await fetch(baseUrl + created.data.url, { redirect: 'manual' });
+  assert.equal(page.status, 200);
+  const csp = page.headers.get('content-security-policy');
+  assert.ok(csp && csp.includes("script-src 'unsafe-inline'"));
+  const html = await page.text();
+  assert.match(html, /<td class="ln">1<\/td>/);
+  assert.match(html, /<td class="ln">4<\/td>/);
+  assert.match(html, /hljs-[a-z]+/);
+  assert.match(html, /btn-copy/);
+  assert.match(html, /btn-download/);
+  // 内联脚本中的 < 必须被转义，避免 </script> 提前闭合
+  assert.doesNotMatch(html, /return a \+ b;<\/script>/);
+});
+
+test('CSV shares render an escaped table with header and CSP', async () => {
+  const content = 'name,note\r\n"hello, world","<script>alert(1)</script>"\nplain,"say ""hi"""';
+  const created = await jsonRequest('/api/shares', {
+    method: 'POST',
+    cookie: sessionCookie,
+    body: { type: 'csv', title: 'CSV page', content, custom_slug: 'csv-launch' },
+  });
+  assert.equal(created.response.status, 200);
+  assert.equal(created.data.url, '/s/csv-launch');
+
+  const page = await fetch(baseUrl + created.data.url, { redirect: 'manual' });
+  assert.equal(page.status, 200);
+  const csp = page.headers.get('content-security-policy');
+  assert.ok(csp && csp.includes("script-src 'unsafe-inline'"));
+  const html = await page.text();
+  assert.match(html, /<th scope="col">name<\/th>/);
+  assert.match(html, /<th scope="col">note<\/th>/);
+  assert.match(html, /hello, world/);
+  assert.match(html, /say &quot;hi&quot;/);
+  // XSS 单元格必须被转义，原始 <script> 不得出现
+  assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+  assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/);
+  assert.match(html, /3 行 × 2 列/);
+  assert.match(html, /btn-download/);
+});
+
+test('invalid CSV content is rejected with 400', async () => {
+  const created = await jsonRequest('/api/shares', {
+    method: 'POST',
+    cookie: sessionCookie,
+    body: { type: 'csv', content: 'a,b\n"unclosed,quote' },
+  });
+  assert.equal(created.response.status, 400);
+  assert.match(created.data.error, /CSV 格式无效/);
+
+  const bad = await jsonRequest('/api/shares', {
+    method: 'POST',
+    cookie: sessionCookie,
+    body: { type: 'csv', content: 'a,b\n"x"y,2' },
+  });
+  assert.equal(bad.response.status, 400);
+});
+
 async function jsonRequest(url, options = {}) {
   const headers = { ...(options.headers || {}) };
   if (options.cookie) headers.Cookie = options.cookie;

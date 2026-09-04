@@ -31,7 +31,7 @@ function initDb(dataDir) {
     CREATE TABLE IF NOT EXISTS shares (
       id TEXT PRIMARY KEY,
       owner_key_id INTEGER NOT NULL REFERENCES keys(id),
-      type TEXT NOT NULL CHECK (type IN ('html','markdown','json','site')),
+      type TEXT NOT NULL CHECK (type IN ('html','markdown','text','csv','json','site')),
       title TEXT NOT NULL DEFAULT '',
       content TEXT,
       password_hash TEXT,
@@ -52,6 +52,31 @@ function initDb(dataDir) {
   const shareColumns = db.prepare('PRAGMA table_info(shares)').all();
   if (!shareColumns.some((column) => column.name === 'password_hash')) {
     db.exec('ALTER TABLE shares ADD COLUMN password_hash TEXT');
+  }
+
+  // 存量库的 shares 表 CHECK 约束不含 text/csv：SQLite 无法修改 CHECK，需重建表
+  const sharesSchema = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'shares'").get();
+  if (sharesSchema && !sharesSchema.sql.includes("'text'")) {
+    const rebuild = db.transaction(() => {
+      db.exec(`
+        CREATE TABLE shares_migrated (
+          id TEXT PRIMARY KEY,
+          owner_key_id INTEGER NOT NULL REFERENCES keys(id),
+          type TEXT NOT NULL CHECK (type IN ('html','markdown','text','csv','json','site')),
+          title TEXT NOT NULL DEFAULT '',
+          content TEXT,
+          password_hash TEXT,
+          views INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL
+        );
+        INSERT INTO shares_migrated (id, owner_key_id, type, title, content, password_hash, views, created_at)
+          SELECT id, owner_key_id, type, title, content, password_hash, views, created_at FROM shares;
+        DROP TABLE shares;
+        ALTER TABLE shares_migrated RENAME TO shares;
+        CREATE INDEX IF NOT EXISTS idx_shares_owner ON shares(owner_key_id);
+      `);
+    });
+    rebuild();
   }
 
   return db;

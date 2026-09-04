@@ -2,7 +2,7 @@
 
 把 AI 生成的内容，一键变成可以分享的链接。
 
-粘贴 HTML、Markdown、JSON，或上传一个 ZIP 静态站点包，立即生成专属短链接，所见即所得渲染 —— 相当于一个免费的私人虚拟空间。
+粘贴 HTML、Markdown、Text、CSV、JSON，或上传一个 ZIP 静态站点包，立即生成专属短链接，所见即所得渲染 —— 相当于一个免费的私人虚拟空间。
 
 > 界面截图：启动后可截取落地页 `/`、工作台 `/dashboard`、管理后台 `/admin` 与 Markdown 分享页 `/s/:id` 放在此处（本仓库暂未内置截图文件）。
 
@@ -10,6 +10,8 @@
 
 - **HTML 即时渲染**：粘贴完整 HTML，原样输出，效果与本地打开完全一致
 - **Markdown 精美排版**：服务端渲染为优雅排版页面，代码块语法高亮（highlight.js 本地资源，无 CDN 依赖），自适应暗色模式
+- **Text 代码片段**：纯文本/代码自动识别语言并语法高亮，行号 + 一键复制与下载 .txt
+- **CSV 表格视图**：RFC4180 解析校验，首行冻结表头渲染为可读表格，超大文件自动截断（1000 行 × 100 列），支持下载原文
 - **JSON 查看器**：自动校验、美化缩进、行号 + 语法高亮，支持一键复制与下载
 - **ZIP 整站托管**：上传含 `index.html` 的 ZIP，自动校验（zip-slip / 大小 / 条目数）、解压部署、删除临时文件；相对路径的 css/js/图片均可正常访问
 - **多用户密钥体系**：超级管理员生成用户密钥（可备注），每个分享可溯源到归属密钥；支持启用/禁用、删除（级联清理其分享与站点文件）、重置管理员密钥
@@ -58,7 +60,7 @@ npm start
 | `PORT` | `3000` | 服务监听端口 |
 | `DATA_DIR` | `./data`（Docker 中为 `/app/data`） | 数据目录（SQLite 数据库 + 站点解压目录） |
 | `MAX_UPLOAD_MB` | `50` | ZIP 上传大小上限（MB） |
-| `MAX_CONTENT_MB` | `5` | 文本内容（HTML/MD/JSON）大小上限（MB） |
+| `MAX_CONTENT_MB` | `5` | 文本内容（HTML/MD/Text/CSV/JSON）大小上限（MB） |
 | `MAX_SITE_TOTAL_MB` | `300` | ZIP 解压后总大小上限（MB），防 zip bomb |
 | `MAX_SHARES_PER_KEY` | `200` | 每个密钥可创建的分享数量上限 |
 | `TRUST_PROXY` | 不启用 | 置于反向代理后时设置（如 `1` 或 `loopback`），用于获取真实 IP（登录限流依赖它） |
@@ -69,7 +71,7 @@ npm start
 ### 创建分享
 
 1. 在 `/login` 输入密钥登录，进入工作台 `/dashboard`
-2. 选择 Tab：HTML / Markdown / JSON 直接粘贴内容；ZIP 站点选择 `.zip` 文件上传
+2. 选择 Tab：HTML / Markdown / Text / CSV / JSON 直接粘贴内容；ZIP 站点选择 `.zip` 文件上传
 3. 点击「生成链接」，复制生成的 `/s/xxxx` 链接发给任何人（访问者无需登录）
 
 ### ZIP 包要求
@@ -91,7 +93,7 @@ npm start
 > **重要：`/s/` 分享页与登录后台同源。HTML 分享与 ZIP 站点为原样输出，可执行任意 JavaScript —— 请勿分享或打开来源不可信的内容，密钥只发给信任的人。**
 
 - HTML 分享与 ZIP 站点为**原样输出**（这是"所见即所得"的前提），不会做任何内容过滤。管理后台打开 html/site 类型分享前会有确认提示。
-- Markdown 分享经**服务端消毒**（sanitize-html，仅允许安全标签与 http/https/mailto 协议）并附加 **CSP**（`script-src 'none'`）；JSON 查看器同样有 CSP 保护。
+- Markdown 分享经**服务端消毒**（sanitize-html，仅允许安全标签与 http/https/mailto 协议）并附加 **CSP**（`script-src 'none'`）；Text / CSV / JSON 查看器同样在服务端转义全部内容并附加 CSP 保护。
 - ZIP 上传有多重防护：zip-slip 路径校验、单文件 100MB、条目 5000、解压总量熔断（`MAX_SITE_TOTAL_MB`，按声明大小与实际大小双重校验）。
 - 管理后台密钥列表只展示前缀，完整密钥仅在创建时显示一次；重置超级管理员密钥需输入当前密钥确认。
 - 密钥即账号，请像密码一样保管；密钥泄露后立即在后台禁用或删除。

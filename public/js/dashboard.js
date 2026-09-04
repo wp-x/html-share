@@ -1,7 +1,7 @@
 'use strict';
 
 (function () {
-  var TYPE_LABEL = { html: 'HTML', markdown: 'Markdown', json: 'JSON', site: '站点' };
+  var TYPE_LABEL = { html: 'HTML', markdown: 'Markdown', text: 'Text', csv: 'CSV', json: 'JSON', site: '站点' };
 
   function $(sel, el) { return (el || document).querySelector(sel); }
   function $$(sel, el) { return Array.prototype.slice.call((el || document).querySelectorAll(sel)); }

@@ -3,3 +3,4 @@ data/
 .workflow/
 *.log
 .DS_Store
+.shot/

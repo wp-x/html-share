@@ -16,7 +16,8 @@ const {
   isPathInside,
   rmrf,
 } = require('../util');
-const { renderMarkdownPage, renderJsonPage } = require('../markdown');
+const { renderMarkdownPage, renderJsonPage, renderTextPage, renderCsvPage } = require('../markdown');
+const { parseCsv } = require('../csv');
 const { requireAuth } = require('../auth');
 
 const MAX_ZIP_ENTRIES = 5000;
@@ -29,9 +30,9 @@ const PASSWORD_ATTEMPT_LIMIT = 10;
 const PASSWORD_ATTEMPT_WINDOW_MS = 5 * 60 * 1000;
 const CSP_PASSWORD = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'none'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
 
-// Markdown / JSON 分享页的 CSP（html/site 类型保持原样不加）
+// Markdown / 查看器（JSON、Text、CSV）分享页的 CSP（html/site 类型保持原样不加）
 const CSP_MARKDOWN = "default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline'; img-src http: https: data:";
-const CSP_JSON = "default-src 'self'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src http: https: data:";
+const CSP_VIEWER = "default-src 'self'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src http: https: data:";
 
 module.exports = function sharesRouter(db, config) {
   const router = express.Router();
@@ -69,10 +70,10 @@ module.exports = function sharesRouter(db, config) {
     res.json({ shares: rows });
   });
 
-  // 创建文本类分享（html / markdown / json）
+  // 创建文本类分享（html / markdown / text / csv / json）
   router.post('/api/shares', requireAuth, (req, res) => {
     const { type, title, content } = req.body || {};
-    if (!['html', 'markdown', 'json'].includes(type)) {
+    if (!['html', 'markdown', 'text', 'csv', 'json'].includes(type)) {
       return res.status(400).json({ error: '不支持的类型' });
     }
     if (typeof content !== 'string' || content.trim() === '') {
@@ -92,6 +93,13 @@ module.exports = function sharesRouter(db, config) {
         stored = JSON.stringify(JSON.parse(content), null, 2);
       } catch {
         return res.status(400).json({ error: 'JSON 格式无效，请检查语法' });
+      }
+    }
+    if (type === 'csv') {
+      try {
+        parseCsv(content); // 仅校验语法，存储原文
+      } catch {
+        return res.status(400).json({ error: 'CSV 格式无效，请检查引号与分隔符' });
       }
     }
 
@@ -306,7 +314,13 @@ module.exports = function sharesRouter(db, config) {
       return res.setHeader('Content-Security-Policy', CSP_MARKDOWN).type('html').send(renderMarkdownPage(share));
     }
     if (share.type === 'json') {
-      return res.setHeader('Content-Security-Policy', CSP_JSON).type('html').send(renderJsonPage(share));
+      return res.setHeader('Content-Security-Policy', CSP_VIEWER).type('html').send(renderJsonPage(share));
+    }
+    if (share.type === 'text') {
+      return res.setHeader('Content-Security-Policy', CSP_VIEWER).type('html').send(renderTextPage(share));
+    }
+    if (share.type === 'csv') {
+      return res.setHeader('Content-Security-Policy', CSP_VIEWER).type('html').send(renderCsvPage(share));
     }
     // site
     const index = path.join(sitesDir, share.id, 'index.html');
@@ -440,14 +454,14 @@ function getQueryString(req) {
 function passwordPage(share, query = '') {
   const title = escapeHtml(share.title || '受保护的分享');
   const unlockUrl = escapeHtml('/s/' + share.id + '/unlock' + query);
-  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} · 请输入密码</title><link rel="stylesheet" href="/css/style.css"></head><body><section class="login-wrap"><div class="card login-card"><div class="login-logo" aria-hidden="true">&#128274;</div><h1>${title}</h1><p class="muted">此分享受密码保护</p><form id="share-password-form" data-unlock-url="${unlockUrl}"><input class="input input-mono" id="share-password-input" type="password" autocomplete="current-password" placeholder="输入分享密码" aria-label="分享密码" autofocus><div class="form-error" id="share-password-error" role="alert"></div><button class="btn btn-primary btn-block" type="submit" id="share-password-button">解锁查看</button></form></div></section><script src="/js/share-unlock.js"></script></body></html>`;
+  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} · 请输入密码</title><link rel="stylesheet" href="/css/style.css"></head><body class="page-auth"><section class="login-wrap"><div class="card login-card"><div class="login-logo" aria-hidden="true"><span class="brand-mark">H/S</span></div><span class="auth-tag">Locked / Password</span><h1>${title}</h1><p class="muted">此分享受密码保护</p><form id="share-password-form" data-unlock-url="${unlockUrl}"><input class="input input-mono" id="share-password-input" type="password" autocomplete="current-password" placeholder="输入分享密码" aria-label="分享密码" autofocus><div class="form-error" id="share-password-error" role="alert"></div><button class="btn btn-primary btn-block" type="submit" id="share-password-button">解锁查看</button></form></div></section><script src="/js/share-unlock.js"></script></body></html>`;
 }
 
 function defaultTitle(type) {
-  return { html: 'HTML 页面', markdown: 'Markdown 文档', json: 'JSON 数据' }[type] || '未命名';
+  return { html: 'HTML 页面', markdown: 'Markdown 文档', text: '文本片段', csv: 'CSV 表格', json: 'JSON 数据' }[type] || '未命名';
 }
 
 function notFoundPage(msg) {
   const text = msg || '分享不存在或已被删除';
-  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${text}</title><link rel="stylesheet" href="/css/style.css"></head><body><section class="login-wrap"><div class="card login-card"><h1>404</h1><p class="muted">${escapeHtml(text)}</p><a class="btn btn-primary" href="/">返回首页</a></div></section></body></html>`;
+  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${text}</title><link rel="stylesheet" href="/css/style.css"></head><body class="page-auth"><section class="login-wrap"><div class="card login-card"><div class="login-logo" aria-hidden="true"><span class="brand-mark">H/S</span></div><span class="auth-tag">Error / 404</span><h1>404</h1><p class="muted">${escapeHtml(text)}</p><a class="btn btn-primary" href="/">返回首页</a></div></section></body></html>`;
 }

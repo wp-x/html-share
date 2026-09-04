@@ -27,7 +27,7 @@ function shell({ title, key, body, scripts = '', showLoginLink = true, pageClass
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="${escapeHtml(description || 'HTML Share，把 HTML、Markdown、JSON 和 ZIP 静态站点变成可分享链接。')}">
+<meta name="description" content="${escapeHtml(description || 'HTML Share，把 HTML、Markdown、Text、CSV、JSON 和 ZIP 静态站点变成可分享链接。')}">
 <title>${escapeHtml(title)} · HTML Share</title>
 <link rel="stylesheet" href="/css/style.css">
 </head>
@@ -41,6 +41,12 @@ function shell({ title, key, body, scripts = '', showLoginLink = true, pageClass
   </div>
 </nav>
 <main id="main-content">${body}</main>
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <a class="footer-brand" href="/"><span class="footer-brand-main">HTML SHARE</span><span class="footer-brand-sub">CONTENT IN / LINK OUT</span></a>
+    <p class="footer-note">HTML、Markdown、Text、CSV、JSON 与 ZIP 静态站点分享工具。粘贴即发布，链接即作品。</p>
+  </div>
+</footer>
 <script src="/vendor/highlight/highlight.min.js" defer></script>
 ${scripts}
 </body>
@@ -48,69 +54,70 @@ ${scripts}
 }
 
 function landingPage(key) {
+  const ctaHref = key ? '/dashboard' : '/login';
   const body = `
 <section class="brand-hero" data-brand-hero>
-  <canvas class="hero-canvas" id="share-visual" aria-hidden="true"></canvas>
-  <div class="hero-noise" aria-hidden="true"></div>
-  <div class="hero-meta hero-meta-top"><span>AI CONTENT DEPLOYMENT</span><span>NODE / READY</span></div>
-  <div class="hero-wordmark">
-    <h1><span lang="en">HTML</span><span lang="en">SHARE</span></h1>
-    <p>把 AI 生成的内容，从文件变成网址。</p>
+  <div class="hero-meta" aria-hidden="true"><span>AI CONTENT DEPLOYMENT</span><span>NODE / READY</span></div>
+  <div class="hero-inner">
+    <p class="hero-kicker">CONTENT IN — LINK OUT</p>
+    <h1 class="hero-title"><span lang="en">HTML</span><span lang="en">SHARE<i aria-hidden="true">.</i></span></h1>
+    <p class="hero-lede">把 AI 生成的内容，从文件变成网址。粘贴代码或上传 ZIP，几秒内拿到一条可以直接发出去的链接——无需部署脚本，无需配置服务器。</p>
+    <div class="hero-cta-row">
+      <a class="btn btn-primary btn-lg" href="${ctaHref}">${rollLabel(key ? '进入工作台' : '开始发布')}<span aria-hidden="true">&#8599;</span></a>
+      <a class="hero-text-link" href="#formats">了解支持的格式</a>
+    </div>
   </div>
-  <div class="hero-pipeline" role="img" aria-label="HTML、Markdown、JSON 和 ZIP 内容转换成分享链接的流程示意">
-    <div class="pipeline-source"><span>INPUT</span><strong>&lt;html&gt;</strong><strong># markdown</strong><strong>{ json }</strong><strong>site.zip</strong></div>
-    <div class="pipeline-arrow" aria-hidden="true">&#8594;</div>
-    <div class="pipeline-output"><span>LIVE URL</span><strong>/s/launch-page</strong><em>password optional</em></div>
-  </div>
-  <div class="hero-status">
-    <span class="status-live"><i></i> SERVICE ONLINE</span>
-    <dl><div><dt>FORMATS</dt><dd>04</dd></div><div><dt>CUSTOM PATH</dt><dd>YES</dd></div><div><dt>ACCESS</dt><dd>LOCKABLE</dd></div></dl>
-  </div>
-  <div class="hero-action">
-    <p>粘贴代码或上传 ZIP，生成一个可以直接发出去的链接。无需部署脚本，无需配置服务器。</p>
-    <a class="btn btn-primary btn-lg" href="${key ? '/dashboard' : '/login'}">${rollLabel(key ? '进入工作台' : '开始发布')}<span aria-hidden="true">&#8599;</span></a>
-  </div>
-  <a class="hero-scroll" href="#workflow"><span>SCROLL</span><span aria-hidden="true">&#8595;</span></a>
+  <a class="hero-scroll" href="#formats"><span>SCROLL</span><span aria-hidden="true">&#8595;</span></a>
 </section>
 
-<section class="impact-section">
-  <div class="impact-index">01 / SPEED</div>
-  <h2>作品已经完成，<strong>分享不该再等。</strong></h2>
-  <div class="impact-copy"><p>HTML Share 把发布路径缩短成一个动作。</p><p>输入内容，确定访问方式，拿走链接。</p></div>
-</section>
-
-<section class="workflow-section theme-light" id="workflow" data-nav-theme="light">
-  <header class="section-head"><span>02 / INPUTS</span><h2>四条输入轨道，<br>同一个发布终点。</h2></header>
+<section class="section formats-section" id="formats">
+  <header class="section-head" data-reveal>
+    <span class="kicker">01 / FORMATS</span>
+    <h2>六条输入轨道，<em>同一个发布终点。</em></h2>
+    <p class="section-lede">完整页面、结构化文档、代码片段、表格数据、整站打包——无论内容以什么形态交付，都走同一条发布路径。</p>
+  </header>
   <div class="format-list">
-    <article><span class="format-number">01</span><h3>HTML</h3><p>完整页面原样输出，脚本、样式与交互保持不变。</p><code>&lt;/&gt;</code></article>
-    <article><span class="format-number">02</span><h3>Markdown</h3><p>服务端安全渲染，代码高亮与移动端排版自动就位。</p><code># md</code></article>
-    <article><span class="format-number">03</span><h3>JSON</h3><p>先校验，再格式化，生成适合阅读、复制和下载的数据页。</p><code>{ }</code></article>
-    <article><span class="format-number">04</span><h3>ZIP site</h3><p>校验并解压完整静态站点，相对资源路径直接可用。</p><code>.zip</code></article>
+    <article data-reveal><span class="format-number">01</span><h3>HTML</h3><p>完整页面原样输出，脚本、样式与交互保持不变，所见即所得。</p><code>&lt;/&gt;</code></article>
+    <article data-reveal><span class="format-number">02</span><h3>Markdown</h3><p>服务端安全渲染，代码高亮与移动端排版自动就位，长文读起来也舒服。</p><code># md</code></article>
+    <article data-reveal><span class="format-number">03</span><h3>Text</h3><p>纯文本与代码片段自动识别语言、语法高亮，带行号，复制下载一键完成。</p><code>txt</code></article>
+    <article data-reveal><span class="format-number">04</span><h3>CSV</h3><p>表格数据解析为可阅读的表头冻结表格，超大文件自动截断并支持原文下载。</p><code>,,,</code></article>
+    <article data-reveal><span class="format-number">05</span><h3>JSON</h3><p>先校验，再格式化，生成带行号、适合阅读、复制和下载的数据页。</p><code>{ }</code></article>
+    <article data-reveal><span class="format-number">06</span><h3>ZIP Site</h3><p>校验并解压完整静态站点，站内相对资源路径原样部署、直接可用。</p><code>.zip</code></article>
   </div>
 </section>
 
-<section class="control-section" data-nav-theme="dark">
-  <div class="control-copy"><span>03 / CONTROL</span><h2>链接按你的方式抵达。</h2><p>保留随机短链的速度，也可以指定清晰的路径，并给需要控制访问的内容加上密码。</p></div>
-  <div class="control-console" aria-label="自定义链接与密码保护示意">
-    <div class="console-head"><span>SHARE CONFIG</span><span class="status-live"><i></i> VALID</span></div>
-    <div class="console-row"><span>PATH</span><strong>your.host/s/<b>launch-page</b></strong><em>AVAILABLE</em></div>
-    <div class="console-row"><span>ACCESS</span><strong>PROTECTED / &#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</strong><em>SCRYPT</em></div>
-    <div class="console-row"><span>OUTPUT</span><strong>READY TO COPY</strong><em>00.8s</em></div>
+<section class="section control-section">
+  <header class="section-head" data-reveal>
+    <span class="kicker">02 / CONTROL</span>
+    <h2>链接，<em>按你的方式抵达。</em></h2>
+    <p class="section-lede">默认自动生成短链，速度优先；需要时，路径与访问权限都由你决定。</p>
+  </header>
+  <div class="control-grid">
+    <article class="control-card" data-reveal>
+      <span class="control-tag">CUSTOM PATH</span>
+      <h3>自定义路径</h3>
+      <p>把随机短链换成可读、可记、可以印在幻灯片上的地址。</p>
+      <p class="control-demo mono">your.host/s/<b>launch-page</b></p>
+    </article>
+    <article class="control-card" data-reveal>
+      <span class="control-tag">PASSWORD</span>
+      <h3>密码保护</h3>
+      <p>给只想小范围公开的内容加一道锁，访问者输入密码后才能查看。</p>
+      <p class="control-demo mono">PROTECTED / <b>&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</b></p>
+    </article>
   </div>
 </section>
 
-<section class="final-cta theme-light" data-nav-theme="light">
-  <div><span>04 / PUBLISH</span><h2>下一条链接，<br>现在生成。</h2></div>
-  <a class="btn btn-dark btn-lg" href="${key ? '/dashboard' : '/login'}">${rollLabel(key ? '打开工作台' : '使用访问密钥')}<span aria-hidden="true">&#8599;</span></a>
-</section>
-
-<footer class="footer brand-footer"><div><strong>HTML SHARE</strong><span>CONTENT IN / LINK OUT</span></div><p>HTML、Markdown、JSON 与 ZIP 静态站点分享工具。</p></footer>`;
+<section class="final-cta">
+  <div data-reveal><span class="kicker">03 / PUBLISH</span><h2>下一条链接，<br>现在生成。</h2></div>
+  <a class="btn btn-dark btn-lg" href="${ctaHref}">${rollLabel(key ? '打开工作台' : '使用访问密钥')}<span aria-hidden="true">&#8599;</span></a>
+</section>`;
   return shell({
     title: '首页',
     key,
     body,
     pageClass: 'page-home',
-    description: 'HTML Share，把 HTML、Markdown、JSON 和 ZIP 静态站点快速变成可自定义路径、可加密码的分享链接。',
+    description: 'HTML Share，把 HTML、Markdown、Text、CSV、JSON 和 ZIP 静态站点快速变成可自定义路径、可加密码的分享链接。',
     scripts: '<script src="/js/landing.js" defer></script>',
   });
 }
@@ -120,6 +127,7 @@ function loginPage() {
 <section class="login-wrap">
   <div class="card login-card">
     <div class="login-logo">${BRAND_MARK}</div>
+    <span class="auth-tag">ACCESS KEY</span>
     <h1>欢迎回来</h1>
     <p class="muted">请输入你的访问密钥</p>
     <form id="login-form">
@@ -166,6 +174,7 @@ function dashboardPage(key) {
 <section class="page container">
   <div class="page-head">
     <div>
+      <span class="kicker">WORKSPACE</span>
       <h1>工作台</h1>
       <p class="muted">你好，${escapeHtml(key.label || (key.is_admin ? '管理员' : '创作者'))}。把内容粘贴进来，马上生成链接。</p>
     </div>
@@ -181,6 +190,8 @@ function dashboardPage(key) {
     <div class="tabs" id="tabs" role="tablist" aria-label="分享内容类型">
       <button class="tab active" data-tab="html" role="tab" aria-selected="true">HTML</button>
       <button class="tab" data-tab="markdown" role="tab" aria-selected="false">Markdown</button>
+      <button class="tab" data-tab="text" role="tab" aria-selected="false">Text</button>
+      <button class="tab" data-tab="csv" role="tab" aria-selected="false">CSV</button>
       <button class="tab" data-tab="json" role="tab" aria-selected="false">JSON</button>
       <button class="tab" data-tab="site" role="tab" aria-selected="false">ZIP 站点</button>
     </div>
@@ -200,6 +211,16 @@ function dashboardPage(key) {
       <input class="input" data-role="title" placeholder="文档标题（可选）" aria-label="文档标题（可选）">
       <textarea class="textarea textarea-code" data-role="content" rows="12" placeholder="粘贴 Markdown 文本..." aria-label="Markdown 内容"></textarea>
       <button class="btn btn-primary" data-action="create" data-type="markdown">生成链接</button>
+    </div>
+    <div class="tab-panel hidden" data-panel="text" role="tabpanel">
+      <input class="input" data-role="title" placeholder="片段标题（可选）" aria-label="片段标题（可选）">
+      <textarea class="textarea textarea-code" data-role="content" rows="12" placeholder="粘贴纯文本或代码片段，自动识别语言并高亮..." aria-label="文本内容"></textarea>
+      <button class="btn btn-primary" data-action="create" data-type="text">生成链接</button>
+    </div>
+    <div class="tab-panel hidden" data-panel="csv" role="tabpanel">
+      <input class="input" data-role="title" placeholder="表格标题（可选）" aria-label="表格标题（可选）">
+      <textarea class="textarea textarea-code" data-role="content" rows="12" placeholder="粘贴 CSV 数据，首行将作为表头，例如：name,age" aria-label="CSV 内容"></textarea>
+      <button class="btn btn-primary" data-action="create" data-type="csv">生成链接</button>
     </div>
     <div class="tab-panel hidden" data-panel="json" role="tabpanel">
       <input class="input" data-role="title" placeholder="数据标题（可选）" aria-label="数据标题（可选）">
@@ -227,6 +248,7 @@ function dashboardPage(key) {
   </section>
 
   <section class="card share-list-card">
+    <span class="section-kicker">MY SHARES</span>
     <h2 class="card-title">我的分享</h2>
     <div class="table-wrap">
       <table class="table" id="shares-table">
@@ -246,6 +268,7 @@ function adminPage(key) {
 <section class="page container">
   <div class="page-head">
     <div>
+      <span class="kicker">ADMIN</span>
       <h1>管理后台</h1>
       <p class="muted">全局统计、密钥管理与分享溯源。</p>
     </div>
@@ -259,6 +282,7 @@ function adminPage(key) {
   </div>
 
   <div class="card">
+    <span class="section-kicker">ACCESS KEYS</span>
     <h2 class="card-title">密钥管理</h2>
     <div class="key-create-row">
       <input class="input" id="new-key-label" placeholder="新密钥备注（如：张三）" aria-label="新密钥备注">
@@ -281,6 +305,7 @@ function adminPage(key) {
   </div>
 
   <div class="card">
+    <span class="section-kicker">ALL SHARES</span>
     <h2 class="card-title">全局分享管理</h2>
     <div class="filter-row">
       <select class="input select" id="filter-key" aria-label="按密钥筛选"><option value="">全部密钥</option></select>

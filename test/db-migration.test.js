@@ -48,6 +48,10 @@ test('initDb upgrades legacy shares without losing data', () => {
     upgraded.prepare('SELECT id, title, content, password_hash FROM shares WHERE id = ?').get('legacy-id'),
     { id: 'legacy-id', title: 'Legacy', content: '<p>kept</p>', password_hash: null }
   );
+  // 旧库的 CHECK 约束已升级：text / csv 类型可以写入
+  upgraded.prepare("INSERT INTO shares (id, owner_key_id, type, title, content, created_at) VALUES ('text-id', 1, 'text', 'Snippet', 'const x = 1;', '2026-01-02T00:00:00.000Z')").run();
+  upgraded.prepare("INSERT INTO shares (id, owner_key_id, type, title, content, created_at) VALUES ('csv-id', 1, 'csv', 'Table', 'a,b', '2026-01-02T00:00:00.000Z')").run();
+  assert.equal(upgraded.prepare('SELECT COUNT(*) AS c FROM shares').get().c, 3);
   upgraded.close();
   fs.rmSync(root, { recursive: true, force: true });
 });
